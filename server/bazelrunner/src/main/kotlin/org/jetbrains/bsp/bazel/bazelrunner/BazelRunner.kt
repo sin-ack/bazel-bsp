@@ -26,49 +26,50 @@ class BazelRunner(
   inner class CommandBuilder {
     private val workspaceContext = workspaceContextProvider.currentWorkspaceContext()
     private val bazelBinary = workspaceContext.bazelBinary.value.pathString
+    private val root = workspaceRoot
     var inheritWorkspaceOptions = false
 
-    fun clean(builder: BazelCommand.Clean.() -> Unit = {}) = BazelCommand.Clean(bazelBinary).apply { builder() }
+    fun clean(builder: BazelCommand.Clean.() -> Unit = {}) = BazelCommand.Clean(bazelBinary, root).apply { builder() }
 
-    fun shutDown(builder: BazelCommand.ShutDown.() -> Unit = {}) = BazelCommand.ShutDown(bazelBinary).apply { builder() }
+    fun shutDown(builder: BazelCommand.ShutDown.() -> Unit = {}) = BazelCommand.ShutDown(bazelBinary, root).apply { builder() }
 
-    fun info(builder: BazelCommand.Info.() -> Unit = {}) = BazelCommand.Info(bazelBinary).apply { builder() }
+    fun info(builder: BazelCommand.Info.() -> Unit = {}) = BazelCommand.Info(bazelBinary, root).apply { builder() }
 
-    fun version(builder: BazelCommand.Version.() -> Unit = {}) = BazelCommand.Version(bazelBinary).apply { builder() }
+    fun version(builder: BazelCommand.Version.() -> Unit = {}) = BazelCommand.Version(bazelBinary, root).apply { builder() }
 
     fun run(target: Label, builder: BazelCommand.Run.() -> Unit = {}) =
-      BazelCommand.Run(bazelBinary, target).apply { builder() }.also { inheritWorkspaceOptions = true }
+        BazelCommand.Run(bazelBinary, target, root).apply { builder() }.also { inheritWorkspaceOptions = true }
 
-    fun graph(builder: BazelCommand.ModGraph.() -> Unit = {}) = BazelCommand.ModGraph(bazelBinary).apply { builder() }
+    fun graph(builder: BazelCommand.ModGraph.() -> Unit = {}) = BazelCommand.ModGraph(bazelBinary, root).apply { builder() }
 
-    fun path(builder: BazelCommand.ModPath.() -> Unit = {}) = BazelCommand.ModPath(bazelBinary).apply { builder() }
+    fun path(builder: BazelCommand.ModPath.() -> Unit = {}) = BazelCommand.ModPath(bazelBinary, root).apply { builder() }
 
-    fun showRepo(builder: BazelCommand.ModShowRepo.() -> Unit = {}) = BazelCommand.ModShowRepo(bazelBinary).apply { builder() }
+    fun showRepo(builder: BazelCommand.ModShowRepo.() -> Unit = {}) = BazelCommand.ModShowRepo(bazelBinary, root).apply { builder() }
 
     fun dumpRepoMapping(
       builder: BazelCommand.ModDumpRepoMapping.() -> Unit = {
       },
-    ) = BazelCommand.ModDumpRepoMapping(bazelBinary).apply { builder() }
+    ) = BazelCommand.ModDumpRepoMapping(bazelBinary, root).apply { builder() }
 
     fun query(allowManualTargetsSync: Boolean = true, builder: BazelCommand.Query.() -> Unit = {}) =
-      BazelCommand.Query(bazelBinary, allowManualTargetsSync).apply { builder() }
+        BazelCommand.Query(bazelBinary, allowManualTargetsSync, root).apply { builder() }
 
     /** Special version of `query` for asking Bazel about a file instead of a target */
     fun fileQuery(filePath: Path, builder: BazelCommand.FileQuery.() -> Unit = {}) =
-      BazelCommand.FileQuery(bazelBinary, filePath.toString()).apply { builder() }
+        BazelCommand.FileQuery(bazelBinary, filePath.toString(), root).apply { builder() }
 
     fun cquery(builder: BazelCommand.CQuery.() -> Unit = {}) =
-      BazelCommand.CQuery(bazelBinary).apply { builder() }.also { inheritWorkspaceOptions = true }
+        BazelCommand.CQuery(bazelBinary, root).apply { builder() }.also { inheritWorkspaceOptions = true }
 
     fun build(builder: BazelCommand.Build.() -> Unit = {}) =
       BazelCommand
-        .Build(bazelInfo, bazelBinary)
+      .Build(bazelInfo, bazelBinary, root)
         .apply { builder() }
         .also { inheritWorkspaceOptions = true }
 
     fun mobileInstall(target: Label, builder: BazelCommand.MobileInstall.() -> Unit = {}) =
       BazelCommand
-        .MobileInstall(bazelBinary, target)
+      .MobileInstall(bazelBinary, target, root)
         .apply {
           // --tool_tag is not supported by mobile-install
           this.options.clear()
@@ -76,10 +77,10 @@ class BazelRunner(
         }.also { inheritWorkspaceOptions = true }
 
     fun test(builder: BazelCommand.Test.() -> Unit = {}) =
-      BazelCommand.Test(bazelBinary).apply { builder() }.also { inheritWorkspaceOptions = true }
+        BazelCommand.Test(bazelBinary, root).apply { builder() }.also { inheritWorkspaceOptions = true }
 
     fun coverage(builder: BazelCommand.Coverage.() -> Unit = {}) =
-      BazelCommand.Coverage(bazelBinary).apply { builder() }.also { inheritWorkspaceOptions = true }
+        BazelCommand.Coverage(bazelBinary, root).apply { builder() }.also { inheritWorkspaceOptions = true }
   }
 
   fun buildBazelCommand(inheritProjectviewOptionsOverride: Boolean? = null, doBuild: CommandBuilder.() -> BazelCommand): BazelCommand {
@@ -147,6 +148,7 @@ class BazelRunner(
       processBuilder.environment() += command.environment
       logInvocation(processArgs, command.environment, command.workingDirectory, originId, shouldLogInvocation = shouldLogInvocation)
     } else {
+      command.workspaceRoot?.also { processBuilder.directory(it.toFile()) }
       logInvocation(processArgs, null, null, originId, shouldLogInvocation = shouldLogInvocation)
     }
 

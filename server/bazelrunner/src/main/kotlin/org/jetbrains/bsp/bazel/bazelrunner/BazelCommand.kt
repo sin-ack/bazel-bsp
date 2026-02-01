@@ -67,7 +67,7 @@ interface HasSingleTarget {
 data class BazelCommandExecutionDescriptor(val command: List<String>, val finishCallback: () -> Unit = {})
 
 // See https://bazel.build/reference/command-line-reference#commands
-abstract class BazelCommand(val bazelBinary: String) {
+abstract class BazelCommand(val bazelBinary: String, val workspaceRoot: Path? = null) {
   // See https://bazel.build/reference/command-line-reference#startup-options
   val startupOptions: MutableList<String> = mutableListOf()
 
@@ -87,8 +87,8 @@ abstract class BazelCommand(val bazelBinary: String) {
     )
   }
 
-  class Run(bazelBinary: String, override val target: Label) :
-    BazelCommand(bazelBinary),
+  class Run(bazelBinary: String, override val target: Label, workspaceRoot: Path?) :
+      BazelCommand(bazelBinary, workspaceRoot),
     HasProgramArguments,
     HasEnvironment,
     HasSingleTarget,
@@ -119,8 +119,8 @@ abstract class BazelCommand(val bazelBinary: String) {
     }
   }
 
-  class Build(private val bazelInfo: BazelInfo?, bazelBinary: String) :
-    BazelCommand(bazelBinary),
+  class Build(private val bazelInfo: BazelInfo?, bazelBinary: String, workspaceRoot: Path?) :
+    BazelCommand(bazelBinary, workspaceRoot),
     HasEnvironment,
     HasMultipleTargets {
     override val targets: MutableList<Label> = mutableListOf()
@@ -186,8 +186,8 @@ abstract class BazelCommand(val bazelBinary: String) {
     }
   }
 
-  class Test(bazelBinary: String) :
-    BazelCommand(bazelBinary),
+  class Test(bazelBinary: String, workspaceRoot: Path?) :
+      BazelCommand(bazelBinary, workspaceRoot),
     HasEnvironment,
     HasMultipleTargets,
     HasProgramArguments,
@@ -215,8 +215,8 @@ abstract class BazelCommand(val bazelBinary: String) {
     }
   }
 
-  class Coverage(bazelBinary: String) :
-    BazelCommand(bazelBinary),
+  class Coverage(bazelBinary: String, workspaceRoot: Path?) :
+    BazelCommand(bazelBinary, workspaceRoot),
     HasEnvironment,
     HasMultipleTargets,
     HasProgramArguments {
@@ -242,8 +242,8 @@ abstract class BazelCommand(val bazelBinary: String) {
   }
 
   // TODO: perhaps it's possible to install multiple targets at once?
-  class MobileInstall(bazelBinary: String, override val target: Label) :
-    BazelCommand(bazelBinary),
+  class MobileInstall(bazelBinary: String, override val target: Label, workspaceRoot: Path?) :
+      BazelCommand(bazelBinary, workspaceRoot),
     HasSingleTarget {
     override fun buildExecutionDescriptor(): BazelCommandExecutionDescriptor {
       val commandLine = mutableListOf(bazelBinary)
@@ -257,8 +257,8 @@ abstract class BazelCommand(val bazelBinary: String) {
     }
   }
 
-  class Query(bazelBinary: String, private val allowManualTargetsSync: Boolean) :
-    BazelCommand(bazelBinary),
+  class Query(bazelBinary: String, private val allowManualTargetsSync: Boolean, workspaceRoot: Path?) :
+      BazelCommand(bazelBinary, workspaceRoot),
     HasMultipleTargets {
     override val targets: MutableList<Label> = mutableListOf()
     override val excludedTargets: MutableList<Label> = mutableListOf()
@@ -294,8 +294,8 @@ abstract class BazelCommand(val bazelBinary: String) {
       }
   }
 
-  class CQuery(bazelBinary: String) :
-    BazelCommand(bazelBinary),
+  class CQuery(bazelBinary: String, workspaceRoot: Path?) :
+      BazelCommand(bazelBinary, workspaceRoot),
     HasMultipleTargets {
     override val targets: MutableList<Label> = mutableListOf()
     override val excludedTargets: MutableList<Label> = mutableListOf()
@@ -312,7 +312,7 @@ abstract class BazelCommand(val bazelBinary: String) {
     }
   }
 
-  abstract class SimpleCommand(bazelBinary: String, val command: List<String>) : BazelCommand(bazelBinary) {
+  abstract class SimpleCommand(bazelBinary: String, val command: List<String>, workspaceRoot: Path?) : BazelCommand(bazelBinary, workspaceRoot) {
     override fun buildExecutionDescriptor(): BazelCommandExecutionDescriptor {
       val commandLine = mutableListOf(bazelBinary)
 
@@ -324,21 +324,21 @@ abstract class BazelCommand(val bazelBinary: String) {
     }
   }
 
-  class Version(bazelBinary: String) : SimpleCommand(bazelBinary, listOf("version"))
+  class Version(bazelBinary: String, workspaceRoot: Path?) : SimpleCommand(bazelBinary, listOf("version"), workspaceRoot)
 
-  class Info(bazelBinary: String) : SimpleCommand(bazelBinary, listOf("info"))
+  class Info(bazelBinary: String, workspaceRoot: Path?) : SimpleCommand(bazelBinary, listOf("info"), workspaceRoot)
 
-  class Clean(bazelBinary: String) : SimpleCommand(bazelBinary, listOf("clean"))
+  class Clean(bazelBinary: String, workspaceRoot: Path?) : SimpleCommand(bazelBinary, listOf("clean"), workspaceRoot)
 
-  class ShutDown(bazelBinary: String) : SimpleCommand(bazelBinary, listOf("shutdown"))
+  class ShutDown(bazelBinary: String, workspaceRoot: Path?) : SimpleCommand(bazelBinary, listOf("shutdown"), workspaceRoot)
 
-  class ModGraph(bazelBinary: String) : SimpleCommand(bazelBinary, listOf("mod", "graph"))
+  class ModGraph(bazelBinary: String, workspaceRoot: Path?) : SimpleCommand(bazelBinary, listOf("mod", "graph"), workspaceRoot)
 
-  class ModPath(bazelBinary: String) : SimpleCommand(bazelBinary, listOf("mod", "path"))
+  class ModPath(bazelBinary: String, workspaceRoot: Path?) : SimpleCommand(bazelBinary, listOf("mod", "path"), workspaceRoot)
 
-  class ModShowRepo(bazelBinary: String) : SimpleCommand(bazelBinary, listOf("mod", "show_repo"))
+  class ModShowRepo(bazelBinary: String, workspaceRoot: Path?) : SimpleCommand(bazelBinary, listOf("mod", "show_repo"), workspaceRoot)
 
-  class ModDumpRepoMapping(bazelBinary: String) : SimpleCommand(bazelBinary, listOf("mod", "dump_repo_mapping"))
+  class ModDumpRepoMapping(bazelBinary: String, workspaceRoot: Path?) : SimpleCommand(bazelBinary, listOf("mod", "dump_repo_mapping"), workspaceRoot)
 
-  class FileQuery(bazelBinary: String, filePath: String) : SimpleCommand(bazelBinary, listOf("query", filePath))
+  class FileQuery(bazelBinary: String, filePath: String, workspaceRoot: Path?) : SimpleCommand(bazelBinary, listOf("query", filePath), workspaceRoot)
 }
