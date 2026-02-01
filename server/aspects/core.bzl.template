@@ -45,6 +45,13 @@ def files_to_list(source):
         return []
     return source.files.to_list()
 
+BspTargetInfo = provider(
+    fields = {
+        "bsp_info": "BSP target info",
+        "output_groups": "Output groups for the target",
+    }
+)
+
 def _bsp_target_info_aspect_impl(target, ctx):
     if target.label.name.endswith(".semanticdb") or _is_analysis_test(target):
         return []
@@ -167,10 +174,13 @@ def _bsp_target_info_aspect_impl(target, ctx):
     ctx.actions.write(info_file, proto.encode_text(create_struct(**info)))
     update_sync_output_groups(output_groups, "bsp-target-info", depset([info_file]))
 
-    return struct(
-        bsp_info = struct(**exported_properties),
-        output_groups = output_groups,
-    )
+    return [
+        BspTargetInfo(
+            bsp_info = struct(**exported_properties),
+            output_groups = output_groups,
+        ),
+        OutputGroupInfo(**output_groups),
+    ]
 
 bsp_target_info_aspect = aspect(
     implementation = _bsp_target_info_aspect_impl,
