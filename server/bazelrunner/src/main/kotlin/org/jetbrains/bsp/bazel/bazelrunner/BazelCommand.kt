@@ -269,13 +269,14 @@ abstract class BazelCommand(val bazelBinary: String, val workspaceRoot: Path? = 
       commandLine.addAll(startupOptions)
       commandLine.add("query")
       commandLine.addAll(options)
-      commandLine.add(queryString(allowManualTargetsSync))
+      if (!targets.isEmpty() || !excludedTargets.isEmpty()) {
+        commandLine.add(queryString(allowManualTargetsSync))
+      }
 
       return BazelCommandExecutionDescriptor(commandLine)
     }
 
     fun queryString(allowManualTargetsSync: Boolean): String {
-      if (targets.isEmpty()) return ""
       val includesString = targets.joinToString(separator = " + ")
       val excludesString = excludedTargets.joinToString(separator = " - ")
       val targetString = if (excludesString.isEmpty()) includesString else "$includesString - $excludesString"
