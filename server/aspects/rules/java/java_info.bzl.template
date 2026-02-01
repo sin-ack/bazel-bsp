@@ -1,5 +1,8 @@
 #if( $javaEnabled == "true" && $bazel8OrAbove == "true" )
 load("@${rulesetName}//java/common:java_info.bzl", "JavaInfo")
+#if( $bazel9OrAbove == "true" )
+load("@@rules_java+//java/common:java_common.bzl", "java_common")
+#end
 #end
 
 load("//aspects:utils/utils.bzl", "create_struct", "to_file_location")

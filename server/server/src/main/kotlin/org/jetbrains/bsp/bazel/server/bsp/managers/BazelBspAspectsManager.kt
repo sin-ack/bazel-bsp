@@ -104,6 +104,7 @@ class BazelBspAspectsManager(
     val javaEnabled = Language.Java in activeLanguages
     val pythonEnabled = Language.Python in activeLanguages
     val bazel8OrAbove = bazelRelease.major >= 8
+    val bazel9OrAbove = bazelRelease.major >= 9
     Language.entries.filter { it.isTemplate }.forEach {
       val ruleLanguage = languageRuleMap[it]
 
@@ -120,6 +121,7 @@ class BazelBspAspectsManager(
           "javaEnabled" to javaEnabled.toString(),
           "pythonEnabled" to pythonEnabled.toString(),
           "bazel8OrAbove" to bazel8OrAbove.toString(),
+          "bazel9OrAbove" to bazel9OrAbove.toString(),
           "toolchainType" to ruleLanguage?.let { rl -> toolchains[rl]?.toString()?.let { "\"" + it + "\"" } },
         )
       templateWriter.writeToFile(templateFilePath, outputFile, variableMap)
