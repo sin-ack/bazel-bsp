@@ -63,6 +63,8 @@ fun main(args0: Array<String>) {
       installationDirectory.toString(),
       "--targets",
       args.target,
+      "--bazel-binary",
+      "/usr/bin/bazel",
     ),
   )
 
